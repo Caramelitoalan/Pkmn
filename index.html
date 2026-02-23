@@ -1,0 +1,123 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PokéType Clash</title>
+<style>
+body{font-family:Arial;text-align:center;background:#0d1117;color:white}
+#board{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:320px;margin:20px auto}
+.cell{background:#161b22;border-radius:12px;height:100px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.3s;flex-direction:column}
+.cell:hover{transform:scale(1.05)}
+.correct{background:#238636 !important;animation:pop .4s}
+.wrong{background:#da3633 !important;animation:shake .4s}
+@keyframes pop{0%{transform:scale(.5)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+img{width:60px}
+#menu button{margin:10px;padding:12px 18px;border:none;border-radius:10px;background:#238636;color:white;font-size:16px}
+</style>
+</head>
+<body>
+
+<h1>PokéType Clash</h1>
+
+<div id="menu">
+<button onclick="startGame()">Jugar</button>
+</div>
+
+<div>Turno: <span id="turn">X</span> | Tiempo: <span id="time">50</span></div>
+<div>Puntos X: <span id="px">0</span> | Puntos O: <span id="po">0</span></div>
+
+<div id="board"></div>
+
+<input list="pokemonList" id="pokeInput" placeholder="Nombre Pokémon" style="display:none">
+<datalist id="pokemonList"></datalist>
+
+<script>
+const pokemon=["pikachu","charizard","bulbasaur","salamence","articuno","gengar","dragonite","mewtwo","lucario","greninja"];
+const sprites=n=>`https://img.pokemondb.net/sprites/home/normal/${n}.png`;
+
+let board=[],turn="X",timer=50,interval,points={X:0,O:0};
+
+const boardDiv=document.getElementById("board");
+const input=document.getElementById("pokeInput");
+
+pokemon.forEach(p=>{
+ let o=document.createElement("option");o.value=p;
+ document.getElementById("pokemonList").appendChild(o);
+});
+
+function startGame(){
+ board=[];boardDiv.innerHTML="";
+ for(let i=0;i<9;i++){
+  let c=document.createElement("div");
+  c.className="cell";
+  c.onclick=()=>selectCell(c,i);
+  boardDiv.appendChild(c);
+  board.push(null);
+ }
+ resetTimer();
+}
+
+let selectedIndex=null;
+function selectCell(cell,i){
+ if(board[i])return;
+ selectedIndex=i;
+ input.style.display="block";
+ input.focus();
+}
+
+input.onchange=()=>{
+ const name=input.value.toLowerCase();
+ const cell=boardDiv.children[selectedIndex];
+ if(pokemon.includes(name)){
+  cell.classList.add("correct");
+  cell.innerHTML=`<img src="${sprites(name)}"><small>${turn}</small>`;
+  board[selectedIndex]=turn;
+  points[turn]++;
+  updatePoints();
+  checkWin();
+ }else{
+  cell.classList.add("wrong");
+ }
+ changeTurn();
+ input.value="";
+ input.style.display="none";
+};
+
+function changeTurn(){
+ turn=turn==="X"?"O":"X";
+ document.getElementById("turn").textContent=turn;
+ resetTimer();
+}
+
+function resetTimer(){
+ clearInterval(interval);
+ timer=50;
+ document.getElementById("time").textContent=timer;
+ interval=setInterval(()=>{
+  timer--;
+  document.getElementById("time").textContent=timer;
+  if(timer<=0)changeTurn();
+ },1000);
+}
+
+function updatePoints(){
+ document.getElementById("px").textContent=points.X;
+ document.getElementById("po").textContent=points.O;
+}
+
+function checkWin(){
+ const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+ wins.forEach(w=>{
+  if(board[w[0]]&&board[w[0]]===board[w[1]]&&board[w[1]]===board[w[2]]){
+   alert("Ganador "+board[w[0]]);
+   startGame();
+  }
+ });
+}
+</script>
+
+</body>
+</html>
